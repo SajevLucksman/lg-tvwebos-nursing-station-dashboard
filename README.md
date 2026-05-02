@@ -80,8 +80,38 @@ This application is built to run on LG commercial/hospitality TVs mounted at nur
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v22 or later
-- [LG webOS TV SDK](https://webostv.developer.lge.com/develop/tools/sdk-introduction) (includes `ares-*` CLI tools and emulator)
 - [VS Code](https://code.visualstudio.com/) with [webOS Studio extension](https://marketplace.visualstudio.com/items?itemName=webOS.webos-studio) (recommended)
+- [LG webOS TV SDK](https://webostv.developer.lge.com/develop/tools/sdk-introduction) — includes `ares-*` CLI tools and the TV emulator
+
+### LG TV Developer Setup
+
+To deploy and test on a physical LG webOS TV, the following setup is required on the TV itself:
+
+1. **Install the Developer Mode App on the TV**
+   - On the LG TV, open the **LG Content Store** (app store)
+   - Search for **Developer Mode** and install it
+   - Launch the Developer Mode app and sign in with your [LG Developer account](https://webostv.developer.lge.com/)
+   - Toggle **Dev Mode Status** to **ON**
+   - Toggle **Key Server** to **ON**
+   - Note the TV's **IP address** displayed in the app
+   - The TV will restart — reopen the Developer Mode app after reboot to keep it active
+
+2. **Register the TV as a device on your computer**
+   ```bash
+   # Add the TV as a device
+   ares-setup-device --add myTV --info "{'host':'<TV_IP>', 'port':'9922', 'username':'prisoner'}"
+
+   # Generate and install the dev key
+   ares-novacom --device myTV --getkey
+   ```
+   Enter the passphrase shown in the Developer Mode app on the TV when prompted.
+
+3. **Verify the connection**
+   ```bash
+   ares-device-info --device myTV
+   ```
+
+> **Note:** Developer Mode on the TV expires every 50 hours. You must reopen the Developer Mode app on the TV and click **Extend** to renew the session. If the session expires, installed dev apps will be removed.
 
 ## Setup
 
@@ -134,16 +164,27 @@ ares-launch --device emulator com.domain.app
 
 ## Deploy to Physical TV
 
+Make sure you have completed the [LG TV Developer Setup](#lg-tv-developer-setup) above.
+
 ```bash
-# Set up your TV as a device
-ares-setup-device
+# 1. Build the app
+npm run webos:build
 
-# Install
-ares-install --device <device-name> com.domain.app_1.0.0_all.ipk
+# 2. Package into .ipk
+ares-package webos-build/
 
-# Launch
-ares-launch --device <device-name> com.domain.app
+# 3. Install on the TV
+ares-install --device myTV com.domain.app_1.0.0_all.ipk
+
+# 4. Launch the app
+ares-launch --device myTV com.domain.app
 ```
+
+To **debug** the app running on the TV:
+```bash
+ares-inspect --device myTV --app com.domain.app --open
+```
+This opens Chrome DevTools connected to the app on the TV.
 
 ## Available Scripts
 
